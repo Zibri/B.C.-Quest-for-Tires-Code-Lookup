@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>B.C. Quest for Tires Code Lookup</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Press+Start+2P&display=swap');
+
+  :root {
+    --c64-blue: #4040e8;
+    --c64-light-blue: #7070ff;
+    --c64-bg: #3535c8;
+    --c64-border: #7070ff;
+    --c64-text: #a0a0ff;
+    --c64-white: #e0e0ff;
+    --c64-cyan: #70ffff;
+    --c64-yellow: #f0f070;
+    --c64-red: #ff5050;
+    --c64-green: #50ff50;
+    --pixel: 2px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--c64-bg);
+    color: var(--c64-text);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 40px;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Scanline overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 3px,
+      rgba(0,0,0,0.12) 3px,
+      rgba(0,0,0,0.12) 4px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* CRT vignette */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,10,0.65) 100%);
+    pointer-events: none;
+    z-index: 99;
+  }
+
+  .screen {
+    width: 100%;
+    max-width: 720px;
+    background: #2020b0;
+    border: 4px solid var(--c64-border);
+    box-shadow:
+      0 0 0 4px #1010a0,
+      0 0 40px rgba(112,112,255,0.4),
+      inset 0 0 60px rgba(0,0,40,0.5);
+    padding: 32px 28px 36px;
+    position: relative;
+  }
+
+  /* Pixel-art corner decorations */
+  .screen::before {
+    content: '████ ████';
+    position: absolute;
+    top: -14px; left: 20px;
+    color: var(--c64-border);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    background: #2020b0;
+    padding: 0 6px;
+  }
+
+  .title-block {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  .title-main {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(11px, 3vw, 15px);
+    color: var(--c64-yellow);
+    text-shadow: 2px 2px 0 #a08000, 0 0 20px rgba(240,240,112,0.4);
+    letter-spacing: 1px;
+    line-height: 1.6;
+    margin-bottom: 8px;
+  }
+
+  .title-sub {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(6px, 1.8vw, 8px);
+    color: var(--c64-cyan);
+    text-shadow: 0 0 12px rgba(112,255,255,0.5);
+    letter-spacing: 2px;
+  }
+
+  .divider {
+    border: none;
+    border-top: 2px solid var(--c64-border);
+    margin: 20px 0;
+    opacity: 0.5;
+  }
+
+  .label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    color: var(--c64-cyan);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  /* ── Row selector ── */
+  .row-section, .col-section {
+    margin-bottom: 24px;
+  }
+
+  .row-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .row-btn {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 15px;
+    font-weight: bold;
+    width: 36px; height: 36px;
+    background: #1818a0;
+    border: 2px solid #5050d0;
+    color: var(--c64-white);
+    cursor: pointer;
+    transition: background 0.05s, color 0.05s, border-color 0.05s;
+    text-align: center;
+    line-height: 32px;
+    user-select: none;
+  }
+
+  .row-btn:hover {
+    background: #3030d8;
+    border-color: var(--c64-cyan);
+    color: var(--c64-cyan);
+  }
+
+  .row-btn.active {
+    background: var(--c64-cyan);
+    border-color: var(--c64-cyan);
+    color: #001a1a;
+    text-shadow: none;
+    box-shadow: 0 0 10px rgba(112,255,255,0.5);
+  }
+
+  /* ── Column selector ── */
+  .col-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .col-btn {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    width: 44px; height: 36px;
+    background: #1818a0;
+    border: 2px solid #5050d0;
+    color: var(--c64-white);
+    cursor: pointer;
+    transition: background 0.05s, color 0.05s, border-color 0.05s;
+    text-align: center;
+    line-height: 32px;
+    user-select: none;
+  }
+
+  .col-btn:hover {
+    background: #3030d8;
+    border-color: var(--c64-yellow);
+    color: var(--c64-yellow);
+  }
+
+  .col-btn.active {
+    background: var(--c64-yellow);
+    border-color: var(--c64-yellow);
+    color: #1a1800;
+    text-shadow: none;
+    box-shadow: 0 0 10px rgba(240,240,112,0.5);
+  }
+
+  /* ── Result area ── */
+  .result-area {
+    margin-top: 10px;
+    background: #0c0c70;
+    border: 3px solid #5050d0;
+    padding: 22px 20px;
+    text-align: center;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .result-area::before {
+    content: 'OUTPUT';
+    position: absolute;
+    top: -10px; left: 16px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    color: #5050d0;
+    background: #0c0c70;
+    padding: 0 6px;
+  }
+
+  .result-prompt {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    color: #5050d0;
+    line-height: 2;
+  }
+
+  .result-coord {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    color: var(--c64-text);
+    margin-bottom: 14px;
+  }
+
+  .result-code {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(28px, 8vw, 48px);
+    color: var(--c64-green);
+    text-shadow: 0 0 20px rgba(80,255,80,0.7), 0 0 40px rgba(80,255,80,0.3);
+    letter-spacing: 8px;
+    animation: flicker 0.15s ease-in-out;
+  }
+
+  @keyframes flicker {
+    0%   { opacity: 0.3; }
+    30%  { opacity: 1; }
+    60%  { opacity: 0.7; }
+    100% { opacity: 1; }
+  }
+
+  .result-hint {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: #5555c0;
+    margin-top: 10px;
+    letter-spacing: 1px;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 22px;
+    text-align: center;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 6px;
+    color: #4040b0;
+    line-height: 2.2;
+  }
+
+  /* Cursor blink */
+  .cursor {
+    display: inline-block;
+    width: 10px; height: 16px;
+    background: var(--c64-white);
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  /* Selection info bar */
+  .sel-bar {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin: 16px 0 6px;
+    font-size: 13px;
+    color: var(--c64-text);
+    letter-spacing: 1px;
+  }
+
+  .sel-pill {
+    background: #18189a;
+    border: 1px solid #4444c0;
+    padding: 3px 12px;
+    color: var(--c64-white);
+  }
+
+  .sel-pill span {
+    color: var(--c64-yellow);
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+
+<div class="screen">
+  <div class="title-block">
+    <div class="title-main">B.C. QUEST FOR TIRES</div>
+    <div class="title-sub">◆ PROTECTION CODE LOOKUP ◆</div>
+  </div>
+  <hr class="divider">
+
+  <div class="row-section">
+    <label class="label">① SELECT ROW (A – R)</label>
+    <div class="row-grid" id="rowGrid"></div>
+  </div>
+
+  <div class="col-section">
+    <label class="label">② SELECT COLUMN (0 – 19)</label>
+    <div class="col-grid" id="colGrid"></div>
+  </div>
+
+  <div class="sel-bar">
+    <div class="sel-pill">ROW: <span id="selRow">—</span></div>
+    <div class="sel-pill">COL: <span id="selCol">—</span></div>
+  </div>
+
+  <div class="result-area" id="resultArea">
+    <div class="result-prompt">SELECT ROW AND COLUMN ABOVE<br>TO REVEAL YOUR CODE<span class="cursor"></span></div>
+  </div>
+
+  <div class="footer">
+    C64 ORIGINAL TAPE EDITION &nbsp;·&nbsp; TABLE: $5500 &nbsp;·&nbsp; 18×20 = 360 BYTES<br>
+    MADE WITH ♥ FOR THE PROTECTION WHEEL
+  </div>
+</div>
+
+<script>
+  const HEX = `
+A2 DF 9A A2 FF 4C 1F 70 03 CA 10 F7 58 A2 08 BD
+00 80 DD 90 57 F0 03 4C 55 5A CA 10 F2 A9 CF 85
+FC A9 00 85 FB A9 AA A0 FF 91 FB 88 D0 FB C6 FC
+A6 FC E0 BF D0 F3 A9 00 8D 15 D0 8D 4F 57 8D 18
+D4 8D 20 D0 8D 21 D0 AD 02 DD 09 03 8D 02 DD AD
+00 DD 29 FC 09 03 8D 00 DD A9 04 8D 88 02 A9 14
+8D 18 D0 A9 00 8D 60 57 8D 61 57 A5 A2 0A 0A 0A
+2E 60 57 0A 2E 60 57 AE 60 57 8E 5F 57 0A 2E 60
+57 0A 2E 60 57 AD 60 57 18 6D 5F 57 8D 60 57 AD
+12 D0 29 3F 0A 0A 0A 2E 61 57 AE 61 57 8E 5F 57
+0A 2E 61 57 0A 2E 61 57 0A 2E 61 57 AD 61 57 18
+6D 5F 57 8D 61 57 A9 55 85 FE A9 00 A2 14 18 6D
+61 57 90 02 E6 FE CA D0 F5 85 FD AC 60 57 B1 FD
+85 02 AD 60 57 0A AA BD 62 57 8D 2E 57 E8 BD 62
+57 8D 2F 57 AC 61 57 C8 8C 2D 57 A9 00 85 FB A8
+A9 04 85 FC A9 20 91 FB 88 D0 F9 E6 FC A5 FC C9
+08 D0 F1 A2 20 BD 0F 57 9D 90 05 A9 0E 9D 90 D9
+CA 10 F2 A2 0E BD 30 57 9D E0 05 9D 30 06 9D F2
+05 9D 1A 06 9D 42 06 A9 00 9D F2 D9 9D 1A DA 9D
+42 DA BD 3F 57 9D 08 06 BD 50 57 9D E0 D9 9D 08
+DA 9D 30 DA CA 10 CE A2 00 8E 4E 57 A2 03 A5 C5
+C9 40 F0 FA C9 01 D0 08 AD 4E 57 F0 F1 4C A1 56
+C9 38 D0 25 A9 00 9D 03`;
+
+  const TABLE = HEX.trim().split(/\s+/).map(h => parseInt(h, 16));
+
+  function choicesFromPacked(packed) {
+    return [
+      ((packed >> 6) & 0x03) + 1,
+      ((packed >> 4) & 0x03) + 1,
+      ((packed >> 2) & 0x03) + 1,
+      (packed & 0x03) + 1
+    ];
+  }
+
+  let selRow = null, selCol = null;
+
+  const rowGrid = document.getElementById('rowGrid');
+  for (let i = 0; i < 18; i++) {
+    const ch = String.fromCharCode(65 + i);
+    const btn = document.createElement('button');
+    btn.className = 'row-btn';
+    btn.textContent = ch;
+    btn.dataset.row = i;
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.row-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selRow = i;
+      document.getElementById('selRow').textContent = ch;
+      updateResult();
+    });
+    rowGrid.appendChild(btn);
+  }
+
+  const colGrid = document.getElementById('colGrid');
+  for (let c = 0; c < 20; c++) {
+    const btn = document.createElement('button');
+    btn.className = 'col-btn';
+    btn.textContent = c;
+    btn.dataset.col = c;
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.col-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selCol = c;
+      document.getElementById('selCol').textContent = c;
+      updateResult();
+    });
+    colGrid.appendChild(btn);
+  }
+
+  function updateResult() {
+    const area = document.getElementById('resultArea');
+    if (selRow === null || selCol === null) {
+      area.innerHTML = `<div class="result-prompt">SELECT ROW AND COLUMN ABOVE<br>TO REVEAL YOUR CODE<span class="cursor"></span></div>`;
+      return;
+    }
+    const idx = selRow * 20 + selCol;
+    const packed = TABLE[idx];
+    const choices = choicesFromPacked(packed);
+    const code = choices.join('');
+    const rowLabel = String.fromCharCode(65 + selRow);
+    area.innerHTML = `
+      <div class="result-coord">COORDINATE: ${rowLabel}${selCol}</div>
+      <div class="result-code">${code}</div>
+      <div class="result-hint">ENTER THIS CODE ON THE WHEEL</div>
+    `;
+  }
+</script>
+</body>
+</html>
