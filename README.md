@@ -19,9 +19,9 @@ The C64 tape version uses a **protection wheel** — a physical cardboard dial i
 
 ## What This Tool Does
 
-When the game starts, it prompts you with a coordinate like **"Row G, Column 11"**. Without the original wheel, you're stuck.
+When the game starts, it prompts you with a coordinate like **"Row G, Column 11"**. Without the original manual, you're stuck.
 
-This tool reverse-engineers the `$5500` table embedded in the tape binary (18 rows × 20 columns = 360 bytes), unpacks the 2-bit fields stored in each byte, and shows you the correct 4-digit code instantly.
+This tool reverse-engineers the table embedded in the tape binary (18 rows × 20 columns = 360 bytes), unpacks the 2-bit fields stored in each byte, and shows you the correct 4-digit code instantly.
 
 ---
 
